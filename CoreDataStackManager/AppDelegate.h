@@ -2,20 +2,25 @@
 //  AppDelegate.h
 //  CoreDataStackManager
 //
-//  Created by Axel Péju on 17/03/12.
-//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
-//
 
 #import <Cocoa/Cocoa.h>
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
+// Outlets
 @property (assign) IBOutlet NSWindow *window;
+@property (weak) IBOutlet NSTableView *tableView;
+@property (weak) IBOutlet NSArrayController *arrayController;
 
-@property (readonly, strong, nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
-@property (readonly, strong, nonatomic) NSManagedObjectModel *managedObjectModel;
-@property (readonly, strong, nonatomic) NSManagedObjectContext *managedObjectContext;
+// Actions
+- (IBAction)toggleICloudStorage:(id)sender;
+- (IBAction)seedInitalContent:(id)sender;
+- (IBAction)save:(id)sender;
 
-- (IBAction)saveAction:(id)sender;
+@property (strong) NSManagedObjectContext * managedObjectContext;
+@property BOOL iCloudDocumentStorageAvailable;
+@property (nonatomic, readonly) NSString * iCloudDocumentStorageStatus;
+@property (strong) NSString * iCloudButtonTitle;
+@property BOOL iCloudButtonEnabled;
 
 @end

@@ -14,6 +14,7 @@
 		776C9F031514CEDC00CA9292 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 776C9F021514CEDC00CA9292 /* AppDelegate.m */; };
 		776C9F061514CEDC00CA9292 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 776C9F041514CEDC00CA9292 /* MainMenu.xib */; };
 		776C9F091514CEDC00CA9292 /* CoreDataStackManager.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 776C9F071514CEDC00CA9292 /* CoreDataStackManager.xcdatamodeld */; };
+		77C26EB71514D21F007BB1CD /* APCoreDataStackManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 776C9F101514CF7900CA9292 /* APCoreDataStackManager.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,15 +23,18 @@
 		776C9EF21514CEDC00CA9292 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		776C9EF31514CEDC00CA9292 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		776C9EF41514CEDC00CA9292 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		776C9EF71514CEDC00CA9292 /* CoreDataStackManager-Info.plist */ = {isa = PBXFileReference; path = "CoreDataStackManager-Info.plist"; sourceTree = "<group>"; };
+		776C9EF71514CEDC00CA9292 /* CoreDataStackManager-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "CoreDataStackManager-Info.plist"; sourceTree = "<group>"; };
 		776C9EF91514CEDC00CA9292 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		776C9EFB1514CEDC00CA9292 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		776C9EFD1514CEDC00CA9292 /* CoreDataStackManager-Prefix.pch */ = {isa = PBXFileReference; path = "CoreDataStackManager-Prefix.pch"; sourceTree = "<group>"; };
+		776C9EFD1514CEDC00CA9292 /* CoreDataStackManager-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CoreDataStackManager-Prefix.pch"; sourceTree = "<group>"; };
 		776C9EFF1514CEDC00CA9292 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
-		776C9F011514CEDC00CA9292 /* AppDelegate.h */ = {isa = PBXFileReference; path = AppDelegate.h; sourceTree = "<group>"; };
+		776C9F011514CEDC00CA9292 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		776C9F021514CEDC00CA9292 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		776C9F051514CEDC00CA9292 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		776C9F081514CEDC00CA9292 /* CoreDataStackManager.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = CoreDataStackManager.xcdatamodel; sourceTree = "<group>"; };
+		776C9F0F1514CF7900CA9292 /* APCoreDataStackManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = APCoreDataStackManager.h; sourceTree = "<group>"; };
+		776C9F101514CF7900CA9292 /* APCoreDataStackManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = APCoreDataStackManager.m; sourceTree = "<group>"; };
+		776F5C991514DAB700E75092 /* CoreDataStackManager.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = CoreDataStackManager.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,8 +88,11 @@
 		776C9EF51514CEDC00CA9292 /* CoreDataStackManager */ = {
 			isa = PBXGroup;
 			children = (
+				776F5C991514DAB700E75092 /* CoreDataStackManager.entitlements */,
 				776C9F011514CEDC00CA9292 /* AppDelegate.h */,
 				776C9F021514CEDC00CA9292 /* AppDelegate.m */,
+				776C9F0F1514CF7900CA9292 /* APCoreDataStackManager.h */,
+				776C9F101514CF7900CA9292 /* APCoreDataStackManager.m */,
 				776C9F041514CEDC00CA9292 /* MainMenu.xib */,
 				776C9F071514CEDC00CA9292 /* CoreDataStackManager.xcdatamodeld */,
 				776C9EF61514CEDC00CA9292 /* Supporting Files */,
@@ -170,6 +177,7 @@
 			files = (
 				776C9EFC1514CEDC00CA9292 /* main.m in Sources */,
 				776C9F031514CEDC00CA9292 /* AppDelegate.m in Sources */,
+				77C26EB71514D21F007BB1CD /* APCoreDataStackManager.m in Sources */,
 				776C9F091514CEDC00CA9292 /* CoreDataStackManager.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -254,6 +262,8 @@
 		776C9F0D1514CEDC00CA9292 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = CoreDataStackManager/CoreDataStackManager.entitlements;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "CoreDataStackManager/CoreDataStackManager-Prefix.pch";
 				INFOPLIST_FILE = "CoreDataStackManager/CoreDataStackManager-Info.plist";
@@ -265,6 +275,8 @@
 		776C9F0E1514CEDC00CA9292 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = CoreDataStackManager/CoreDataStackManager.entitlements;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "CoreDataStackManager/CoreDataStackManager-Prefix.pch";
 				INFOPLIST_FILE = "CoreDataStackManager/CoreDataStackManager-Info.plist";
@@ -292,6 +304,7 @@
 				776C9F0E1514CEDC00CA9292 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 
