@@ -49,8 +49,7 @@
     [coreDataStackManager resetStackWithAppropriatePersistentStore:^(NSManagedObjectContext * context, NSError * error) {
         [self setManagedObjectContext:context];
         [arrayController fetch:self];
-        BOOL storeIsLocal = [[coreDataStackManager localStoreURL] isEqual:[coreDataStackManager currentStoreURL]];
-        [self setICloudButtonTitle:storeIsLocal?ACTIVATETITLE:DEACTIVATETITLE];
+        [self setICloudButtonTitle:[coreDataStackManager isPersistentStoreUbiquitous]?DEACTIVATETITLE:ACTIVATETITLE];
         [self setICloudButtonEnabled:YES];
     }];
     
@@ -118,7 +117,7 @@
 
 - (IBAction)toggleICloudStorage:(id)sender {
     APCoreDataStackManager * coreDataStackManager = [self coreDataStackManager];
-    BOOL storeIsLocal = [[coreDataStackManager localStoreURL] isEqual:[coreDataStackManager currentStoreURL]];
+    BOOL storeIsLocal = ![coreDataStackManager isPersistentStoreUbiquitous];
     
     [self setICloudButtonEnabled:NO];
     if(storeIsLocal) {
