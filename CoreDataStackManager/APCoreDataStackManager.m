@@ -234,7 +234,7 @@
                                         options:0
                                           error:&outError
                                      byAccessor:^(NSURL *newURL) {
-                                         NSData * ubiquityConfigurationData = [NSData dataWithContentsOfURL:ubiquityConfigurationURL];
+                                         NSData * ubiquityConfigurationData = [NSData dataWithContentsOfURL:newURL];
                                          if(ubiquityConfigurationData) {
                                              NSDictionary * dictionary = [NSPropertyListSerialization propertyListWithData:ubiquityConfigurationData
                                                                                                                    options:NSPropertyListImmutable
@@ -275,7 +275,7 @@
                                         options:0
                                           error:&outError
                                      byAccessor:^(NSURL *newURL) {
-                                         NSData * ubiquityConfigurationData = [NSData dataWithContentsOfURL:ubiquityConfigurationURL];
+                                         NSData * ubiquityConfigurationData = [NSData dataWithContentsOfURL:newURL];
                                          if(ubiquityConfigurationData) {
                                              NSDictionary * dictionary = [NSPropertyListSerialization propertyListWithData:ubiquityConfigurationData
                                                                                                                    options:NSPropertyListImmutable
@@ -459,7 +459,6 @@
             // Resume the queue for pending persistent store operations
             dispatch_resume(ap_persistentStoreQueue);
         };
-        
         // Check if migration is needed
         NSError * error = nil;
         NSURL * storeUrl = [self localStoreURL];
