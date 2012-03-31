@@ -510,38 +510,52 @@
                                                           }
                                                           else {
                                                               if(available) {
-                                                                  dispatch_async(ap_persistentStoreQueue, ^{        
-                                                                      // Block the queue until we are finished
-                                                                      dispatch_suspend(ap_persistentStoreQueue);
-                                                                      
-                                                                      [self ap_resetCoreDataStack];
-                                                                      
-                                                                      ap_ubiquityContainerURL = ubiquityContainerURL;
-                                                                      [self setUbiquitousContentName:contentName];
-                                                                      [self setUbiquitousPersistentStoreURL:persistentStoreURL];
-                                                                      
-                                                                      NSError * error = nil;
-                                                                      NSPersistentStore * store = [self ap_addUbiquitousPersistentStoreWithError:&error];
-                                                                      
-                                                                      dispatch_resume(ap_persistentStoreQueue);
-                                                                      
-                                                                      dispatch_async(dispatch_get_main_queue(), ^{
-                                                                          if(store) {
-                                                                              if(completionHandler) {
-                                                                                  NSManagedObjectContext * context = nil;
-                                                                                  if(store) {
-                                                                                      context = [self rootManagedObjectContext];
+                                                                  if(persistentStoreURL) {
+                                                                      dispatch_async(ap_persistentStoreQueue, ^{        
+                                                                          // Block the queue until we are finished
+                                                                          dispatch_suspend(ap_persistentStoreQueue);
+                                                                          
+                                                                          [self ap_resetCoreDataStack];
+                                                                          
+                                                                          ap_ubiquityContainerURL = ubiquityContainerURL;
+                                                                          [self setUbiquitousContentName:contentName];
+                                                                          [self setUbiquitousPersistentStoreURL:persistentStoreURL];
+                                                                          
+                                                                          NSError * error = nil;
+                                                                          NSPersistentStore * store = [self ap_addUbiquitousPersistentStoreWithError:&error];
+                                                                          
+                                                                          dispatch_resume(ap_persistentStoreQueue);
+                                                                          
+                                                                          dispatch_async(dispatch_get_main_queue(), ^{
+                                                                              if(store) {
+                                                                                  if(completionHandler) {
+                                                                                      NSManagedObjectContext * context = nil;
+                                                                                      if(store) {
+                                                                                          context = [self rootManagedObjectContext];
+                                                                                      }
+                                                                                      completionHandler(context, error);
                                                                                   }
-                                                                                  completionHandler(context, error);
                                                                               }
-                                                                          }
-                                                                          else {
-                                                                              if(completionHandler) {
-                                                                                  completionHandler(nil, error);
-                                                                              }
-                                                                          }   
+                                                                              else {
+                                                                                  if(completionHandler) {
+                                                                                      completionHandler(nil, error);
+                                                                                  }
+                                                                              }   
+                                                                          });
                                                                       });
-                                                                  });
+                                                                  }
+                                                                  else {
+                                                                      // Document storage is available, but no persistent store could be found
+                                                                      if(completionHandler) {
+                                                                          dispatch_async(dispatch_get_main_queue(), ^{
+                                                                              NSError * error = [NSError errorWithDomain:CORE_DATA_STACK_MANAGER_ERROR_DOMAIN
+                                                                                                                    code:APCoreDataStackManagerErrorNoUbiquitousPersistentStoreFound
+                                                                                                                userInfo:nil];
+                                                                              completionHandler(nil, error);
+                                                                          });
+                                                                      }
+                                                                      
+                                                                  }
                                                               }
                                                               else {
                                                                   // Document storage is not available
@@ -866,7 +880,7 @@
     // Read the content name
     NSString * contentName = nil;
     [self ap_readContentNameFromCloudIntoString:&contentName];
-    
+    NSLog(@"c %@", contentName);
     if(![ap_currentStoreUbiquitousContentName isEqual:contentName]) {
         BOOL iCloudEnabled = NO;
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerShouldUseUbiquitousStore:)]) {
@@ -926,7 +940,7 @@
         NSManagedObjectContext * managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
         [managedObjectContext performBlockAndWait:^{
             [managedObjectContext setPersistentStoreCoordinator:coordinator];
-            [managedObjectContext setMergePolicy:NSMergeByPropertyObjectTrumpMergePolicy];
+            [managedObjectContext setMergePolicy:NSOverwriteMergePolicy];
         }];
         [self setRootManagedObjectContext:managedObjectContext];
     }

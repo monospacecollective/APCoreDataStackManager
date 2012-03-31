@@ -113,6 +113,7 @@ enum
     APCoreDataStackManagerErrorUnknown =                            -1,
     APCoreDataStackManagerErrorDocumentStorageUnavailable =         100,
     APCoreDataStackManagerErrorDocumentStorageAvailabilityTimeOut = 101,
+    APCoreDataStackManagerErrorNoUbiquitousPersistentStoreFound =   102,
     APCoreDataStackManagerErrorLocalStoreURLUnavailable =           200,
     APCoreDataStackManagerErrorFileFoundAtApplicationDirectoryURL = 300,
 };
