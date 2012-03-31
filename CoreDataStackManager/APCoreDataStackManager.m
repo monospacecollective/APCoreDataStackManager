@@ -243,17 +243,10 @@
                                          }
                                          
                                          ap_filePresenterURL = newURL;
+                                         [NSFileCoordinator addFilePresenter:self];
                                      }];
     if(string) {
         * string = contentName;
-    }
-    
-    // Observe Configuration.plist file
-    if(ap_filePresenterURL) {
-        [NSFileCoordinator addFilePresenter:self];
-    }
-    else {
-        [NSFileCoordinator removeFilePresenter:self];        
     }
     
     return !outError;
@@ -289,6 +282,9 @@
                                           error:nil
                                      byAccessor:^(NSURL *newURL) {
                                          [ubiquityConfigurationData writeToURL:newURL atomically:YES];
+                                         
+                                         ap_filePresenterURL = newURL;
+                                         [NSFileCoordinator addFilePresenter:self];
                                      }];
 }
 
@@ -368,6 +364,12 @@
             [delegate coreDataStackManagerWillAddLocalStore:self];
         }
     });
+    
+    // Stop observing the Configuration.plist file if we were observing it
+    if([[NSFileCoordinator filePresenters] containsObject:self]) {
+        [NSFileCoordinator removeFilePresenter:self];
+    }
+    
     NSError * pscError = nil;
     
     [self ap_createApplicationDirectoryIfNeededWithError:&pscError];
