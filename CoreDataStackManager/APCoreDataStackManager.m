@@ -876,17 +876,32 @@
     reader(^{});
 }
 
+- (void)accommodatePresentedItemDeletionWithCompletionHandler:(void (^)(NSError *errorOrNil))completionHandler {
+    BOOL isUsingUbiquitousStore = NO;
+    if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerShouldUseUbiquitousStore:)]) {
+        isUsingUbiquitousStore = [delegate coreDataStackManagerShouldUseUbiquitousStore:self];
+    }
+    if(isUsingUbiquitousStore) {
+        // Data from the cloud was deleted
+        if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerRequestLocalStoreRefresh:)]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [delegate coreDataStackManagerRequestLocalStoreRefresh:self];
+            });
+        }
+    }
+    completionHandler(nil);
+}
+
 - (void)presentedItemDidChange {
     // Read the content name
     NSString * contentName = nil;
     [self ap_readContentNameFromCloudIntoString:&contentName];
-    NSLog(@"c %@", contentName);
     if(![ap_currentStoreUbiquitousContentName isEqual:contentName]) {
-        BOOL iCloudEnabled = NO;
+        BOOL isUsingUbiquitousStore = NO;
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerShouldUseUbiquitousStore:)]) {
-            iCloudEnabled = [delegate coreDataStackManagerShouldUseUbiquitousStore:self];
+            isUsingUbiquitousStore = [delegate coreDataStackManagerShouldUseUbiquitousStore:self];
         }
-        if(iCloudEnabled) {
+        if(isUsingUbiquitousStore) {
             if(contentName && (NSNull *)contentName != [NSNull null]) {
                 // A new store has been seeded to iCloud
                 if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerRequestUbiquitousStoreRefresh:)]) {
