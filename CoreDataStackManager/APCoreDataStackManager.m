@@ -53,7 +53,6 @@
 
 // Ubiquitous content name
 - (BOOL)ap_readContentNameFromUbiquityContainerURL:(NSURL *)containerURL intoString:(NSString **)string;
-- (BOOL)ap_readContentNameFromCloudIntoString:(NSString **)string;
 - (NSString *)ap_newStoreUbiquitousContentName;
 - (void)ap_configureCloudForStoreUbiquitousContentName:(NSString *)contentName;
 
@@ -257,45 +256,6 @@
         [NSFileCoordinator removeFilePresenter:self];        
     }
     
-    return !outError;
-}
-
-- (BOOL)ap_readContentNameFromCloudIntoString:(NSString **)string {
-    if(!ap_ubiquityContainerURL) {
-        return NO;
-    }
-    
-    // Perform a coordinated reading of the configuration file
-    NSFileCoordinator   * fileCoordinator = [[NSFileCoordinator alloc] initWithFilePresenter:self];
-    
-    __block NSString    * contentName = nil;
-    NSURL               * ubiquityConfigurationURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:UBIQUITYCONFIGURATIONFILENAME];
-    NSError             * outError = nil;
-    [fileCoordinator coordinateReadingItemAtURL:ubiquityConfigurationURL
-                                        options:0
-                                          error:&outError
-                                     byAccessor:^(NSURL *newURL) {
-                                         NSData * ubiquityConfigurationData = [NSData dataWithContentsOfURL:newURL];
-                                         if(ubiquityConfigurationData) {
-                                             NSDictionary * dictionary = [NSPropertyListSerialization propertyListWithData:ubiquityConfigurationData
-                                                                                                                   options:NSPropertyListImmutable
-                                                                                                                    format:NULL
-                                                                                                                     error:nil];
-                                             contentName = [dictionary valueForKey:UBIQUITYCONFIGURATIONCONTENTNAMEKEY];
-                                         }
-                                         
-                                         ap_filePresenterURL = newURL;
-                                     }];
-    * string = contentName;
-    
-    // Observe Configuration.plist file
-    if(ap_filePresenterURL) {
-        [NSFileCoordinator addFilePresenter:self];
-    }
-    else {
-        [NSFileCoordinator removeFilePresenter:self];        
-    }
-
     return !outError;
 }
 
@@ -895,7 +855,7 @@
 - (void)presentedItemDidChange {
     // Read the content name
     NSString * contentName = nil;
-    [self ap_readContentNameFromCloudIntoString:&contentName];
+    [self ap_readContentNameFromUbiquityContainerURL:ap_ubiquityContainerURL intoString:&contentName];
     if(![ap_currentStoreUbiquitousContentName isEqual:contentName]) {
         BOOL isUsingUbiquitousStore = NO;
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerShouldUseUbiquitousStore:)]) {
