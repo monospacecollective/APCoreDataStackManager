@@ -374,8 +374,14 @@
     
     // Set up the ubiquitous options
     NSURL * ubiquitousContentURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:@"UbiquitousContent"];
-    NSDictionary * options = [NSDictionary dictionaryWithObjectsAndKeys:storeUbiquitousContentName, NSPersistentStoreUbiquitousContentNameKey,
-                              ubiquitousContentURL, NSPersistentStoreUbiquitousContentURLKey, nil];
+    
+    NSDictionary * options = [NSDictionary dictionaryWithObjectsAndKeys:
+                              storeUbiquitousContentName, NSPersistentStoreUbiquitousContentNameKey,
+                              ubiquitousContentURL, NSPersistentStoreUbiquitousContentURLKey,
+                              [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
+                              [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption,
+                              nil];
+    
     NSURL * storeURL = [self ap_ubiquitousStoreURLWithContentName:storeUbiquitousContentName];
 
     [persistentStoreCoordinator lock];
@@ -414,10 +420,16 @@
     
     NSURL * localStoreURL = [self localStoreURL];
     NSPersistentStoreCoordinator * persistentStoreCoordinator = [self persistentStoreCoordinator];
+    
+    NSDictionary * options = [NSDictionary dictionaryWithObjectsAndKeys:
+                              [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
+                              [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption,
+                              nil];
+    
     NSPersistentStore * store = [persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType
                                                                          configuration:nil
                                                                                    URL:localStoreURL
-                                                                               options:nil
+                                                                               options:options
                                                                                  error:&pscError];
     ap_currentStoreUbiquitousContentName = nil;
     [self setCurrentPersistentStoreURL:localStoreURL];
@@ -595,8 +607,13 @@
             }
         }
         
+        NSDictionary * options = [NSDictionary dictionaryWithObjectsAndKeys:
+                                  [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
+                                  [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption,
+                                  nil];
+        
         // Add the new store
-        NSPersistentStore * newStore = [psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:originStoreURL options:nil error:&pscError];
+        NSPersistentStore * newStore = [psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:originStoreURL options:options error:&pscError];
         if(!newStore) {
             if(completionHandler) {
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -663,11 +680,16 @@
         __block NSError * pscError = nil;
         NSPersistentStoreCoordinator * psc = [self persistentStoreCoordinator];
         
+        NSDictionary * options = [NSDictionary dictionaryWithObjectsAndKeys:
+                                  [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
+                                  [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption,
+                                  nil];
+        
         // Add the store to migrate
         NSPersistentStore * storeToMigrate = [psc addPersistentStoreWithType:NSSQLiteStoreType
                                                                configuration:nil
                                                                          URL:originStoreURL
-                                                                     options:nil
+                                                                     options:options
                                                                        error:&pscError];
         if(!storeToMigrate) {
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -685,12 +707,17 @@
         // Migrate the store
         NSString        * storeUbiquitousContentName = [self ap_newStoreUbiquitousContentName];
         NSURL           * ubiquitousContentURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:@"UbiquitousContent"];
-        NSDictionary    * options = [NSDictionary dictionaryWithObjectsAndKeys:storeUbiquitousContentName, NSPersistentStoreUbiquitousContentNameKey, ubiquitousContentURL, NSPersistentStoreUbiquitousContentURLKey, nil];
+        
+        NSDictionary * migrationOptions = [NSDictionary dictionaryWithObjectsAndKeys:
+                                           storeUbiquitousContentName, NSPersistentStoreUbiquitousContentNameKey,
+                                           ubiquitousContentURL, NSPersistentStoreUbiquitousContentURLKey,
+                                           nil];
+
         NSURL * ubiquitousStoreURL = [self ap_ubiquitousStoreURLWithContentName:storeUbiquitousContentName];
         
         NSPersistentStore * migratedStore = [psc migratePersistentStore:storeToMigrate 
                                                                   toURL:ubiquitousStoreURL
-                                                                options:options
+                                                                options:migrationOptions
                                                                withType:NSSQLiteStoreType
                                                                   error:&pscError];
         
