@@ -13,9 +13,13 @@
 @interface AppDelegate () <APCoreDataStackManagerDelegate> {
     // Observers
     id ap_iCloudDocumentStorageAvailabilityObserver;
+    
+    void (^ap_persistentStoreCompletionHandler)();
 }
 
 @property (nonatomic, strong) APCoreDataStackManager * coreDataStackManager;
+
+- (void)ap_resetStackToBeLocal;
 
 @end
 
@@ -46,12 +50,28 @@
     APCoreDataStackManager * coreDataStackManager = [self coreDataStackManager];
     
     [self setICloudButtonEnabled:NO];
-    [coreDataStackManager resetStackWithAppropriatePersistentStore:^(NSManagedObjectContext * context, NSError * error) {
-        [self setManagedObjectContext:context];
-        [arrayController fetch:self];
-        [self setICloudButtonTitle:[coreDataStackManager isPersistentStoreUbiquitous]?DEACTIVATETITLE:ACTIVATETITLE];
-        [self setICloudButtonEnabled:YES];
-    }];
+    
+    __weak id wself = self;
+    __weak NSArrayController * warrayController = arrayController;
+    ap_persistentStoreCompletionHandler = ^(NSManagedObjectContext * context, NSError * error){
+        id sself = wself;
+        NSArrayController * sarrayController = warrayController;
+        if(context) {
+            [sself setManagedObjectContext:context];
+            [sarrayController fetch:sself];
+            [sself setICloudButtonTitle:[coreDataStackManager isPersistentStoreUbiquitous]?DEACTIVATETITLE:ACTIVATETITLE];
+            [sself setICloudButtonEnabled:YES];
+        }
+        else if(error) {
+            if([[error domain] isEqualToString:CORE_DATA_STACK_MANAGER_ERROR_DOMAIN]) {
+                // Handle the error appropriately. Most of the time, errors are issued because the stack cannot be set up with a ubiquitous store
+                // You can fall back to using the local ubiquitous store with resetStackToBeLocalWithCompletionHandler:
+                // or you can retry again if you get a APCoreDataStackManagerErrorDocumentStorageAvailabilityTimeOut error
+                [sself ap_resetStackToBeLocal];
+            }
+        }
+    };
+    [coreDataStackManager resetStackWithAppropriatePersistentStore:ap_persistentStoreCompletionHandler];
     
     ap_iCloudDocumentStorageAvailabilityObserver = [center addObserverForName:APUBIQUITOUSSTORAGEAVAILABILITYDIDCHANGENOTIFICATION
                                                                        object:nil
@@ -65,6 +85,10 @@
                selector:@selector(ap_mergeChangesFrom_iCloud:)
                    name:NSPersistentStoreDidImportUbiquitousContentChangesNotification
                  object:nil];
+}
+
+- (void)ap_resetStackToBeLocal {
+    [[self coreDataStackManager] resetStackToBeLocalWithCompletionHandler:ap_persistentStoreCompletionHandler];
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {

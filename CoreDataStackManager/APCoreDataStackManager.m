@@ -53,7 +53,6 @@
 
 // Ubiquitous content name
 - (BOOL)ap_readContentNameFromUbiquityContainerURL:(NSURL *)containerURL intoString:(NSString **)string;
-- (BOOL)ap_readContentNameFromCloudIntoString:(NSString **)string;
 - (NSString *)ap_newStoreUbiquitousContentName;
 - (void)ap_configureCloudForStoreUbiquitousContentName:(NSString *)contentName;
 
@@ -234,7 +233,7 @@
                                         options:0
                                           error:&outError
                                      byAccessor:^(NSURL *newURL) {
-                                         NSData * ubiquityConfigurationData = [NSData dataWithContentsOfURL:ubiquityConfigurationURL];
+                                         NSData * ubiquityConfigurationData = [NSData dataWithContentsOfURL:newURL];
                                          if(ubiquityConfigurationData) {
                                              NSDictionary * dictionary = [NSPropertyListSerialization propertyListWithData:ubiquityConfigurationData
                                                                                                                    options:NSPropertyListImmutable
@@ -244,58 +243,12 @@
                                          }
                                          
                                          ap_filePresenterURL = newURL;
+                                         [NSFileCoordinator addFilePresenter:self];
                                      }];
     if(string) {
         * string = contentName;
     }
     
-    // Observe Configuration.plist file
-    if(ap_filePresenterURL) {
-        [NSFileCoordinator addFilePresenter:self];
-    }
-    else {
-        [NSFileCoordinator removeFilePresenter:self];        
-    }
-    
-    return !outError;
-}
-
-- (BOOL)ap_readContentNameFromCloudIntoString:(NSString **)string {
-    if(!ap_ubiquityContainerURL) {
-        return NO;
-    }
-    
-    // Perform a coordinated reading of the configuration file
-    NSFileCoordinator   * fileCoordinator = [[NSFileCoordinator alloc] initWithFilePresenter:self];
-    
-    __block NSString    * contentName = nil;
-    NSURL               * ubiquityConfigurationURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:UBIQUITYCONFIGURATIONFILENAME];
-    NSError             * outError = nil;
-    [fileCoordinator coordinateReadingItemAtURL:ubiquityConfigurationURL
-                                        options:0
-                                          error:&outError
-                                     byAccessor:^(NSURL *newURL) {
-                                         NSData * ubiquityConfigurationData = [NSData dataWithContentsOfURL:ubiquityConfigurationURL];
-                                         if(ubiquityConfigurationData) {
-                                             NSDictionary * dictionary = [NSPropertyListSerialization propertyListWithData:ubiquityConfigurationData
-                                                                                                                   options:NSPropertyListImmutable
-                                                                                                                    format:NULL
-                                                                                                                     error:nil];
-                                             contentName = [dictionary valueForKey:UBIQUITYCONFIGURATIONCONTENTNAMEKEY];
-                                         }
-                                         
-                                         ap_filePresenterURL = newURL;
-                                     }];
-    * string = contentName;
-    
-    // Observe Configuration.plist file
-    if(ap_filePresenterURL) {
-        [NSFileCoordinator addFilePresenter:self];
-    }
-    else {
-        [NSFileCoordinator removeFilePresenter:self];        
-    }
-
     return !outError;
 }
 
@@ -329,6 +282,9 @@
                                           error:nil
                                      byAccessor:^(NSURL *newURL) {
                                          [ubiquityConfigurationData writeToURL:newURL atomically:YES];
+                                         
+                                         ap_filePresenterURL = newURL;
+                                         [NSFileCoordinator addFilePresenter:self];
                                      }];
 }
 
@@ -414,6 +370,12 @@
             [delegate coreDataStackManagerWillAddLocalStore:self];
         }
     });
+    
+    // Stop observing the Configuration.plist file if we were observing it
+    if([[NSFileCoordinator filePresenters] containsObject:self]) {
+        [NSFileCoordinator removeFilePresenter:self];
+    }
+    
     NSError * pscError = nil;
     
     [self ap_createApplicationDirectoryIfNeededWithError:&pscError];
@@ -471,7 +433,6 @@
             // Resume the queue for pending persistent store operations
             dispatch_resume(ap_persistentStoreQueue);
         };
-        
         // Check if migration is needed
         NSError * error = nil;
         NSURL * storeUrl = [self localStoreURL];
@@ -523,38 +484,52 @@
                                                           }
                                                           else {
                                                               if(available) {
-                                                                  dispatch_async(ap_persistentStoreQueue, ^{        
-                                                                      // Block the queue until we are finished
-                                                                      dispatch_suspend(ap_persistentStoreQueue);
-                                                                      
-                                                                      [self ap_resetCoreDataStack];
-                                                                      
-                                                                      ap_ubiquityContainerURL = ubiquityContainerURL;
-                                                                      [self setUbiquitousContentName:contentName];
-                                                                      [self setUbiquitousPersistentStoreURL:persistentStoreURL];
-                                                                      
-                                                                      NSError * error = nil;
-                                                                      NSPersistentStore * store = [self ap_addUbiquitousPersistentStoreWithError:&error];
-                                                                      
-                                                                      dispatch_resume(ap_persistentStoreQueue);
-                                                                      
-                                                                      dispatch_async(dispatch_get_main_queue(), ^{
-                                                                          if(store) {
-                                                                              if(completionHandler) {
-                                                                                  NSManagedObjectContext * context = nil;
-                                                                                  if(store) {
-                                                                                      context = [self rootManagedObjectContext];
+                                                                  if(persistentStoreURL) {
+                                                                      dispatch_async(ap_persistentStoreQueue, ^{        
+                                                                          // Block the queue until we are finished
+                                                                          dispatch_suspend(ap_persistentStoreQueue);
+                                                                          
+                                                                          [self ap_resetCoreDataStack];
+                                                                          
+                                                                          ap_ubiquityContainerURL = ubiquityContainerURL;
+                                                                          [self setUbiquitousContentName:contentName];
+                                                                          [self setUbiquitousPersistentStoreURL:persistentStoreURL];
+                                                                          
+                                                                          NSError * error = nil;
+                                                                          NSPersistentStore * store = [self ap_addUbiquitousPersistentStoreWithError:&error];
+                                                                          
+                                                                          dispatch_resume(ap_persistentStoreQueue);
+                                                                          
+                                                                          dispatch_async(dispatch_get_main_queue(), ^{
+                                                                              if(store) {
+                                                                                  if(completionHandler) {
+                                                                                      NSManagedObjectContext * context = nil;
+                                                                                      if(store) {
+                                                                                          context = [self rootManagedObjectContext];
+                                                                                      }
+                                                                                      completionHandler(context, error);
                                                                                   }
-                                                                                  completionHandler(context, error);
                                                                               }
-                                                                          }
-                                                                          else {
-                                                                              if(completionHandler) {
-                                                                                  completionHandler(nil, error);
-                                                                              }
-                                                                          }   
+                                                                              else {
+                                                                                  if(completionHandler) {
+                                                                                      completionHandler(nil, error);
+                                                                                  }
+                                                                              }   
+                                                                          });
                                                                       });
-                                                                  });
+                                                                  }
+                                                                  else {
+                                                                      // Document storage is available, but no persistent store could be found
+                                                                      if(completionHandler) {
+                                                                          dispatch_async(dispatch_get_main_queue(), ^{
+                                                                              NSError * error = [NSError errorWithDomain:CORE_DATA_STACK_MANAGER_ERROR_DOMAIN
+                                                                                                                    code:APCoreDataStackManagerErrorNoUbiquitousPersistentStoreFound
+                                                                                                                userInfo:nil];
+                                                                              completionHandler(nil, error);
+                                                                          });
+                                                                      }
+                                                                      
+                                                                  }
                                                               }
                                                               else {
                                                                   // Document storage is not available
@@ -890,17 +865,32 @@
     reader(^{});
 }
 
+- (void)accommodatePresentedItemDeletionWithCompletionHandler:(void (^)(NSError *errorOrNil))completionHandler {
+    BOOL isUsingUbiquitousStore = NO;
+    if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerShouldUseUbiquitousStore:)]) {
+        isUsingUbiquitousStore = [delegate coreDataStackManagerShouldUseUbiquitousStore:self];
+    }
+    if(isUsingUbiquitousStore) {
+        // Data from the cloud was deleted
+        if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerRequestLocalStoreRefresh:)]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [delegate coreDataStackManagerRequestLocalStoreRefresh:self];
+            });
+        }
+    }
+    completionHandler(nil);
+}
+
 - (void)presentedItemDidChange {
     // Read the content name
     NSString * contentName = nil;
-    [self ap_readContentNameFromCloudIntoString:&contentName];
-    
+    [self ap_readContentNameFromUbiquityContainerURL:ap_ubiquityContainerURL intoString:&contentName];
     if(![ap_currentStoreUbiquitousContentName isEqual:contentName]) {
-        BOOL iCloudEnabled = NO;
+        BOOL isUsingUbiquitousStore = NO;
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerShouldUseUbiquitousStore:)]) {
-            iCloudEnabled = [delegate coreDataStackManagerShouldUseUbiquitousStore:self];
+            isUsingUbiquitousStore = [delegate coreDataStackManagerShouldUseUbiquitousStore:self];
         }
-        if(iCloudEnabled) {
+        if(isUsingUbiquitousStore) {
             if(contentName && (NSNull *)contentName != [NSNull null]) {
                 // A new store has been seeded to iCloud
                 if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerRequestUbiquitousStoreRefresh:)]) {
@@ -954,7 +944,7 @@
         NSManagedObjectContext * managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
         [managedObjectContext performBlockAndWait:^{
             [managedObjectContext setPersistentStoreCoordinator:coordinator];
-            [managedObjectContext setMergePolicy:NSMergeByPropertyObjectTrumpMergePolicy];
+            [managedObjectContext setMergePolicy:NSOverwriteMergePolicy];
         }];
         [self setRootManagedObjectContext:managedObjectContext];
     }
