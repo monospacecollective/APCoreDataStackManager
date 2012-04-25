@@ -670,6 +670,7 @@
                                                                   error:&pscError];
         
         ap_currentStoreUbiquitousContentName = storeUbiquitousContentName;
+        ap_ubiquitousPersistentStoreURL = ubiquitousStoreURL;
         [self setCurrentPersistentStoreURL:ubiquitousStoreURL];
         [self ap_configureCloudForStoreUbiquitousContentName:storeUbiquitousContentName];
         
@@ -922,6 +923,7 @@
 }
 
 - (void)presentedItemDidChange {
+    NSLog(@"C");
     // Read the content name
     NSString * contentName = nil;
     [self ap_readContentNameFromUbiquityContainerURL:ap_ubiquityContainerURL intoString:&contentName];
