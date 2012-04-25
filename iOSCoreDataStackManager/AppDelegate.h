@@ -12,7 +12,6 @@
 
 - (void)saveContext;
 - (IBAction)toggleICloudStorage:(id)sender;
-- (IBAction)seedInitalContent:(id)sender;
 
 @property (strong, nonatomic) UINavigationController *navigationController;
 
