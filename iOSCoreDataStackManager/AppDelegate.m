@@ -28,7 +28,10 @@
 @property (strong) UIBarButtonItem * iCloudButton;
 @property (strong) UIBarButtonItem * seedButton;
 
-- (void)ap_resetStackToBeLocal;
+// Persistent Store Management
+
+- (void)ap_openUbiquitousStore;
+- (void)ap_openLocalStore;
 
 @end
 
@@ -221,8 +224,48 @@
     }
 }
 
-- (void)ap_resetStackToBeLocal {
-    [[self coreDataStackManager] resetStackToBeLocalWithCompletionHandler:ap_persistentStoreCompletionHandler];
+#pragma mark - UIAlertViewDelegate
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if(alertView == ap_ubiquitousStoreUnavailableAlertView) {
+        if(buttonIndex == 1) {
+            // Use local store
+            [self ap_openLocalStore];
+        }
+        else {
+            // Retry
+            [self ap_openUbiquitousStore];
+        }
+    }
+    else if(alertView == ap_couldNotOpenUbiquitousStoreAlertView) {
+        [self ap_openLocalStore];
+    }
+    else if(alertView == ap_noUbiquitousPersistentStoreFoundAlertView) {
+        [self ap_openLocalStore];
+    }
+}
+
+#pragma mark - Persistent Store Management
+
+- (void)ap_openUbiquitousStore {
+    APCoreDataStackManager * coreDataStackManager = [self coreDataStackManager];
+    [coreDataStackManager resetStackToBeUbiquitousWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {
+        ap_persistentStoreCompletionHandler(context, error);
+        if(context) {
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:USERDEFAULTSUSEICLOUDSTORAGE];
+        }
+    }];
+}
+
+- (void)ap_openLocalStore {
+    APCoreDataStackManager * manager = [self coreDataStackManager];
+    
+    [manager resetStackToBeLocalWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {
+        ap_persistentStoreCompletionHandler(context, error);
+        if(context) {
+            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:USERDEFAULTSUSEICLOUDSTORAGE];  
+        }   
+    }];
 }
 
 - (void)setICloudButtonEnabled:(BOOL)iCloudButtonEnabled {
@@ -234,8 +277,7 @@
     [[self iCloudButton] setTitle:iCloudButtonTitle];
 }
 
-#pragma mark
-#pragma mark Actions
+#pragma mark - Actions
 
 - (IBAction)toggleICloudStorage:(id)sender {
     APCoreDataStackManager * coreDataStackManager = [self coreDataStackManager];
