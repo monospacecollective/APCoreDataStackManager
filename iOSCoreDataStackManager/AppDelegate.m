@@ -207,7 +207,6 @@
     
     [self setICloudButtonEnabled:NO];
     if(storeIsLocal) {
-        NSLog(@"going ubi");
         // If coreDataStackManager returns nil for ubiquitousStoreURL, no initial store has been seeded.
         if([coreDataStackManager ubiquitousStoreURL]) {
             // Switch to the ubiquitous persistent store
@@ -238,7 +237,6 @@
         }
     }
     else {
-        NSLog(@"going local");
         [coreDataStackManager resetStackToBeLocalWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {
             ap_persistentStoreCompletionHandler(context, error);
             if(context) {
@@ -271,9 +269,7 @@
 
 // Requests the delegate to refresh the stack using the local store
 - (void)coreDataStackManagerRequestLocalStoreRefresh:(APCoreDataStackManager *)manager {
-    NSLog(@"load local store…");
     [manager resetStackToBeLocalWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {
-        NSLog(@"loaded local store");
         ap_persistentStoreCompletionHandler(context, error);
         if(context) {
             [[NSUserDefaults standardUserDefaults] setBool:NO forKey:USERDEFAULTSUSEICLOUDSTORAGE];

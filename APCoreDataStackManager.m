@@ -923,7 +923,6 @@
 }
 
 - (void)presentedItemDidChange {
-    NSLog(@"C");
     // Read the content name
     NSString * contentName = nil;
     [self ap_readContentNameFromUbiquityContainerURL:ap_ubiquityContainerURL intoString:&contentName];
