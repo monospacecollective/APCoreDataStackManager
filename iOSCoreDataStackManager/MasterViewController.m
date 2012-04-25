@@ -157,6 +157,10 @@
         return __fetchedResultsController;
     }
     
+    if(![self managedObjectContext]) {
+        return nil;
+    }
+    
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Event"];
     
     // Set the batch size to a suitable number.

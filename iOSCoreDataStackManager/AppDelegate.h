@@ -11,7 +11,6 @@
 @property (strong) NSManagedObjectContext * managedObjectContext;
 
 - (void)saveContext;
-- (NSURL *)applicationDocumentsDirectory;
 - (IBAction)toggleICloudStorage:(id)sender;
 - (IBAction)seedInitalContent:(id)sender;
 

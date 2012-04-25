@@ -41,7 +41,34 @@
 @synthesize splitViewController = ap_splitViewController;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // iCloud uttons
+    UIWindow * window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    [self setWindow:window];
+    
+    MasterViewController * masterViewController = nil;
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
+        masterViewController = [[MasterViewController alloc] initWithNibName:@"MasterViewController_iPhone" bundle:nil];
+        
+        UINavigationController * navigationController = [[UINavigationController alloc] initWithRootViewController:masterViewController];
+        [navigationController setToolbarHidden:NO];
+        [self setNavigationController:navigationController];
+        [window setRootViewController:navigationController];
+    } else {
+        masterViewController = [[MasterViewController alloc] initWithNibName:@"MasterViewController_iPad" bundle:nil];
+        UINavigationController * masterNavigationController = [[UINavigationController alloc] initWithRootViewController:masterViewController];
+        [masterNavigationController setToolbarHidden:NO];
+        
+        DetailViewController * detailViewController = [[DetailViewController alloc] initWithNibName:@"DetailViewController_iPad" bundle:nil];
+        UINavigationController * detailNavigationController = [[UINavigationController alloc] initWithRootViewController:detailViewController];
+        [masterViewController setDetailViewController:detailViewController];
+        
+        UISplitViewController * splitViewController = [[UISplitViewController alloc] init];
+        [self setSplitViewController:splitViewController];
+        [splitViewController setDelegate:detailViewController];
+        [splitViewController setViewControllers:[NSArray arrayWithObjects:masterNavigationController, detailNavigationController, nil]];
+        [window setRootViewController:splitViewController];
+    }
+
+    // iCloud buttons
     UIBarButtonItem * iCloudButton = [[UIBarButtonItem alloc] initWithTitle:@"Toggle iCloud"
                                                                       style:UIBarButtonItemStyleBordered
                                                                      target:self
@@ -52,9 +79,11 @@
                                                                    target:self
                                                                    action:@selector(seedInitalContent:)];
     [self setSeedButton:seedButton];
-    
-    UIWindow * window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    [self setWindow:window];
+    UIBarButtonItem * saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:self action:@selector(saveContext)];
+    UIBarItem * flexibleSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+    [masterViewController setToolbarItems:[NSArray arrayWithObjects:iCloudButton, seedButton, flexibleSpaceItem, saveButton, nil]];
+    [self setMasterViewController:masterViewController];
+    [window makeKeyAndVisible];
     
     NSNotificationCenter * center = [NSNotificationCenter defaultCenter];
     
@@ -68,57 +97,44 @@
         id sself = wself;
         if(context) {
             [sself setManagedObjectContext:context];
-            [sself setICloudButtonTitle:[coreDataStackManager isPersistentStoreUbiquitous]?DEACTIVATETITLE:ACTIVATETITLE];
-            [sself setICloudButtonEnabled:YES];
-            
-            MasterViewController * masterViewController = nil;
-            // Override point for customization after application launch.
-            if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
-                masterViewController = [[MasterViewController alloc] initWithNibName:@"MasterViewController_iPhone" bundle:nil];
-                
-                UINavigationController * navigationController = [[UINavigationController alloc] initWithRootViewController:masterViewController];
-                [navigationController setToolbarHidden:NO];
-                [sself setNavigationController:navigationController];
-                [window setRootViewController:navigationController];
-            } else {
-                masterViewController = [[MasterViewController alloc] initWithNibName:@"MasterViewController_iPad" bundle:nil];
-                UINavigationController * masterNavigationController = [[UINavigationController alloc] initWithRootViewController:masterViewController];
-                [masterNavigationController setToolbarHidden:NO];
-                
-                DetailViewController * detailViewController = [[DetailViewController alloc] initWithNibName:@"DetailViewController_iPad" bundle:nil];
-                UINavigationController * detailNavigationController = [[UINavigationController alloc] initWithRootViewController:detailViewController];
-                [masterViewController setDetailViewController:detailViewController];
-                
-                UISplitViewController * splitViewController = [[UISplitViewController alloc] init];
-                [sself setSplitViewController:splitViewController];
-                [splitViewController setDelegate:detailViewController];
-                [splitViewController setViewControllers:[NSArray arrayWithObjects:masterNavigationController, detailNavigationController, nil]];
-                [window setRootViewController:splitViewController];
-            }
-            UIBarButtonItem * saveButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave target:sself action:@selector(saveContext)];
-            UIBarItem * flexibleSpaceItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-            [masterViewController setToolbarItems:[NSArray arrayWithObjects:iCloudButton, seedButton, flexibleSpaceItem, saveButton, nil]];
+            MasterViewController * masterViewController = [sself masterViewController];
             [masterViewController setManagedObjectContext:context];
-            [sself setMasterViewController:masterViewController];
-            [window makeKeyAndVisible];
+            [masterViewController setFetchedResultsController:nil];
+            UITableView * tableView = (UITableView *)[[sself masterViewController] view];
+            if([tableView isKindOfClass:[UITableView class]]) {
+                [tableView reloadData];
+            }
         }
         else if(error) {
             if([[error domain] isEqualToString:CORE_DATA_STACK_MANAGER_ERROR_DOMAIN]) {
+                NSLog(@"%@", error);
                 // Handle the error appropriately. Most of the time, errors are issued because the stack cannot be set up with a ubiquitous store
                 // You can fall back to using the local ubiquitous store with resetStackToBeLocalWithCompletionHandler:
                 // or you can retry again if you get a APCoreDataStackManagerErrorDocumentStorageAvailabilityTimeOut error
                 [sself ap_resetStackToBeLocal];
             }
         }
+        
+        // Set the toggle iCloud storage button's title accordingly
+        BOOL isStoreCurrentlyUbiquitous = [[sself coreDataStackManager] isPersistentStoreUbiquitous];
+        [sself setICloudButtonTitle:isStoreCurrentlyUbiquitous?DEACTIVATETITLE:ACTIVATETITLE];
     };
     [coreDataStackManager resetStackWithAppropriatePersistentStore:ap_persistentStoreCompletionHandler];
     
+    // Observe the availability of the iCloud document storage
     ap_iCloudDocumentStorageAvailabilityObserver = [center addObserverForName:APUBIQUITOUSSTORAGEAVAILABILITYDIDCHANGENOTIFICATION
                                                                        object:nil
                                                                         queue:nil
                                                                    usingBlock:^(NSNotification *note) {
                                                                        BOOL available = [[[note userInfo] valueForKey:@"ubiquitousStorageAvailable"] boolValue];
                                                                        [self setICloudDocumentStorageAvailable:available];
+                                                                       
+                                                                       // Enable buttons to seed initial content and toggle iCloud storage
+                                                                       [self setICloudButtonEnabled:available];
+                                                                       
+                                                                       // Set the toggle iCloud storage button's title accordingly
+                                                                       BOOL isStoreCurrentlyUbiquitous = [[self coreDataStackManager] isPersistentStoreUbiquitous];
+                                                                       [self setICloudButtonTitle:isStoreCurrentlyUbiquitous?DEACTIVATETITLE:ACTIVATETITLE];
                                                                    }];
     
     [center addObserver:self
@@ -191,31 +207,26 @@
     
     [self setICloudButtonEnabled:NO];
     if(storeIsLocal) {
+        NSLog(@"going ubi");
         // If coreDataStackManager returns nil for ubiquitousStoreURL, no initial store has been seeded.
         if([coreDataStackManager ubiquitousStoreURL]) {
             // Switch to the ubiquitous persistent store
             [coreDataStackManager resetStackToBeUbiquitousWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {
-                [self setManagedObjectContext:context];
-                [[self masterViewController] setManagedObjectContext:context];
-                [[self masterViewController] setFetchedResultsController:nil];
-                UITableView * tableView = (UITableView *)[[self masterViewController] view];
-                [tableView reloadData];
-                [self setICloudButtonTitle:DEACTIVATETITLE];
-                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:USERDEFAULTSUSEICLOUDSTORAGE];
-                [self setICloudButtonEnabled:YES];
+                ap_persistentStoreCompletionHandler(context, error);
+                
+                if(context) {
+                    [self setICloudButtonTitle:DEACTIVATETITLE];
+                    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:USERDEFAULTSUSEICLOUDSTORAGE];
+                    [self setICloudButtonEnabled:YES];
+                }
             }];
         }
         else {
             // Seed initial content for the ubiquitous persistent store
             [coreDataStackManager replaceCloudStoreWithStoreAtURL:[coreDataStackManager localStoreURL]
                                                 completionHandler:^(NSManagedObjectContext * context, NSError * error) {
+                                                    ap_persistentStoreCompletionHandler(context, error);
                                                     if(context) {
-                                                        [self setManagedObjectContext:context];
-                                                        [[self masterViewController] setManagedObjectContext:context];
-                                                        [[self masterViewController] setFetchedResultsController:nil];
-                                                        UITableView * tableView = (UITableView *)[[self masterViewController] view];
-                                                        [tableView reloadData];
-                                                        
                                                         [self setICloudButtonTitle:DEACTIVATETITLE];
                                                         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:USERDEFAULTSUSEICLOUDSTORAGE];
                                                         [self setICloudButtonEnabled:YES];
@@ -227,15 +238,14 @@
         }
     }
     else {
+        NSLog(@"going local");
         [coreDataStackManager resetStackToBeLocalWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {
-            [self setManagedObjectContext:context];
-            [[self masterViewController] setManagedObjectContext:context];
-            [[self masterViewController] setFetchedResultsController:nil];
-            UITableView * tableView = (UITableView *)[[self masterViewController] view];
-            [tableView reloadData];
-            [self setICloudButtonTitle:ACTIVATETITLE];
-            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:USERDEFAULTSUSEICLOUDSTORAGE];
-            [self setICloudButtonEnabled:YES];
+            ap_persistentStoreCompletionHandler(context, error);
+            if(context) {
+                [self setICloudButtonTitle:ACTIVATETITLE];
+                [[NSUserDefaults standardUserDefaults] setBool:NO forKey:USERDEFAULTSUSEICLOUDSTORAGE];
+                [self setICloudButtonEnabled:YES];
+            }
         }];
     }
 }
@@ -247,12 +257,12 @@
     [self setICloudButtonEnabled:NO];
     [coreDataStackManager replaceCloudStoreWithStoreAtURL:[coreDataStackManager localStoreURL]
                                         completionHandler:^(NSManagedObjectContext * context, NSError * error) {
-                                            [self setManagedObjectContext:context];
-                                            [[self masterViewController] setManagedObjectContext:context];
-                                            [[self masterViewController] setFetchedResultsController:nil];
-                                            [self setICloudButtonTitle:DEACTIVATETITLE];
-                                            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:USERDEFAULTSUSEICLOUDSTORAGE];
-                                            [self setICloudButtonEnabled:YES];
+                                            ap_persistentStoreCompletionHandler(context, error);
+                                            if(context) {
+                                                [self setICloudButtonTitle:DEACTIVATETITLE];
+                                                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:USERDEFAULTSUSEICLOUDSTORAGE];
+                                                [self setICloudButtonEnabled:YES];
+                                            }
                                         }];
 }
 
@@ -261,19 +271,23 @@
 
 // Requests the delegate to refresh the stack using the local store
 - (void)coreDataStackManagerRequestLocalStoreRefresh:(APCoreDataStackManager *)manager {
+    NSLog(@"load local store…");
     [manager resetStackToBeLocalWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {
-        [self setManagedObjectContext:context];
-        [[self masterViewController] setManagedObjectContext:context];
-        [[self masterViewController] setFetchedResultsController:nil];
+        NSLog(@"loaded local store");
+        ap_persistentStoreCompletionHandler(context, error);
+        if(context) {
+            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:USERDEFAULTSUSEICLOUDSTORAGE];
+        }
     }];
 }
 
 // Requests the delegate to refresh the stack using the ubiquitous store
 - (void)coreDataStackManagerRequestUbiquitousStoreRefresh:(APCoreDataStackManager *)manager {
     [manager resetStackToBeUbiquitousWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {
-        [self setManagedObjectContext:context];
-        [[self masterViewController] setManagedObjectContext:context];
-        [[self masterViewController] setFetchedResultsController:nil];
+        ap_persistentStoreCompletionHandler(context, error);
+        if(context) {
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:USERDEFAULTSUSEICLOUDSTORAGE];
+        }
     }];
 }
 
