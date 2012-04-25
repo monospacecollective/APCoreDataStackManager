@@ -33,8 +33,8 @@
 		776C9F021514CEDC00CA9292 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		776C9F051514CEDC00CA9292 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		776C9F081514CEDC00CA9292 /* CoreDataStackManager.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = CoreDataStackManager.xcdatamodel; sourceTree = "<group>"; };
-		776C9F0F1514CF7900CA9292 /* APCoreDataStackManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = APCoreDataStackManager.h; sourceTree = "<group>"; };
-		776C9F101514CF7900CA9292 /* APCoreDataStackManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = APCoreDataStackManager.m; sourceTree = "<group>"; };
+		776C9F0F1514CF7900CA9292 /* APCoreDataStackManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = APCoreDataStackManager.h; path = ../APCoreDataStackManager.h; sourceTree = "<group>"; };
+		776C9F101514CF7900CA9292 /* APCoreDataStackManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = APCoreDataStackManager.m; path = ../APCoreDataStackManager.m; sourceTree = "<group>"; };
 		776F5C991514DAB700E75092 /* CoreDataStackManager.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = CoreDataStackManager.entitlements; sourceTree = "<group>"; };
 		77944E3D1548064B00CDC5BC /* README.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.markdown; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
