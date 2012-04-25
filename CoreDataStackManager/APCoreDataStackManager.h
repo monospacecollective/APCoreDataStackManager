@@ -78,12 +78,6 @@
 
 @required
 
-// Request the delegate to handle the migration
-- (void)coreDataStackManager:(APCoreDataStackManager *)manager
-           migrateStoreAtURL:(NSURL *)storeURL
-withDestinationManagedObjectModel:(NSManagedObjectModel *)model
-           completionHandler:(void (^)(BOOL, NSError *))completionHandler;
-
 // Requests the delegate to refresh the stack using the local store
 - (void)coreDataStackManagerRequestLocalStoreRefresh:(APCoreDataStackManager *)manager;
 
@@ -91,6 +85,13 @@ withDestinationManagedObjectModel:(NSManagedObjectModel *)model
 - (void)coreDataStackManagerRequestUbiquitousStoreRefresh:(APCoreDataStackManager *)manager;
 
 @optional
+
+// Request the delegate to handle the migration
+- (void)coreDataStackManager:(APCoreDataStackManager *)manager
+migrateStoreAtURL:(NSURL *)storeURL
+withDestinationManagedObjectModel:(NSManagedObjectModel *)model
+completionHandler:(void (^)(BOOL, NSError *))completionHandler;
+
 - (BOOL)coreDataStackManagerShouldUseUbiquitousStore:(APCoreDataStackManager *)manager;
 - (void)coreDataStackManagerWillAddUbiquitousStore:(APCoreDataStackManager *)manager;
 - (void)coreDataStackManagerDidAddUbiquitousStore:(APCoreDataStackManager *)manager;

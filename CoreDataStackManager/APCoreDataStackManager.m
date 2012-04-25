@@ -722,7 +722,7 @@
         return NO;
     }
     
-    // Get the meta data of the store    
+    // Get the meta data of the store
     NSError         * metadataError = nil;
     NSDictionary    * metadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:NSSQLiteStoreType
                                                                                             URL:storeURL
@@ -735,11 +735,78 @@
 }
 
 - (void)ap_migrateStoreAtURL:(NSURL *)storeURL completionHandler:(void (^)(BOOL, NSError *))completionHandler {
-    if(delegate && [delegate conformsToProtocol:@protocol(APCoreDataStackManagerDelegate)]) {
+    if(delegate && [delegate respondsToSelector:@selector(coreDataStackManager:migrateStoreAtURL:withDestinationManagedObjectModel:completionHandler:)]) {
         [delegate coreDataStackManager:self
                      migrateStoreAtURL:storeURL
      withDestinationManagedObjectModel:[self managedObjectModel]
                      completionHandler:completionHandler];
+    }
+    else {
+        // Migrate ourselves
+        NSError * error = nil;
+		NSDictionary    * sourceMetadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:NSSQLiteStoreType
+																									  URL:storeURL
+																									error:&error];
+		if (!sourceMetadata) {
+            // Couldn't find source metadata
+            if(completionHandler) {
+                completionHandler(NO, error);
+            }
+            return;
+		}
+		
+		NSManagedObjectModel * sourceModel = [NSManagedObjectModel mergedModelFromBundles:nil
+																		 forStoreMetadata:sourceMetadata];
+        NSManagedObjectModel * destinationModel = [self managedObjectModel];
+		NSMigrationManager  * migrationManager = [[NSMigrationManager alloc] initWithSourceModel:sourceModel
+																				destinationModel:destinationModel];
+        
+		// Find the mapping model between the source and the destination model
+		NSMappingModel      * mappingModel = [NSMappingModel mappingModelFromBundles:nil
+																	  forSourceModel:sourceModel
+																	destinationModel:destinationModel];
+        if(!mappingModel) {
+            mappingModel = [NSMappingModel inferredMappingModelForSourceModel:sourceModel
+                                                             destinationModel:destinationModel
+                                                                        error:&error];
+        }
+        
+        if(!mappingModel) {
+            // Couldn't find a mapping model
+            if(completionHandler) {
+                completionHandler(NO, error);
+            }
+            return;
+        }
+        
+        NSURL   * destinationStoreURL = [storeURL URLByAppendingPathExtension:@"new"];
+        if(![migrationManager migrateStoreFromURL:storeURL
+                                             type:NSSQLiteStoreType
+                                          options:nil
+                                 withMappingModel:mappingModel
+                                 toDestinationURL:destinationStoreURL
+                                  destinationType:NSSQLiteStoreType
+                               destinationOptions:nil
+                                            error:&error]) {
+            // Couldn't migrate the store
+            if(completionHandler) {
+                completionHandler(NO, error);
+            }
+            return;
+        }
+        
+        // Move the migrated store file to storeURL, making a backup copy
+        NSString * backupStoreFileName = [[[[storeURL URLByDeletingPathExtension] lastPathComponent] stringByAppendingString:@"~"] stringByAppendingPathExtension:[storeURL pathExtension]];
+        NSURL   * backupStoreURL = [[storeURL URLByDeletingLastPathComponent] URLByAppendingPathComponent:backupStoreFileName];
+
+        NSFileManager * fileManager = [NSFileManager defaultManager];
+        [fileManager removeItemAtURL:backupStoreURL error:NULL];
+        [fileManager moveItemAtURL:storeURL toURL:backupStoreURL error:NULL];
+        [fileManager moveItemAtURL:destinationStoreURL toURL:storeURL error:NULL];
+        
+        if(completionHandler) {
+            completionHandler(YES, nil);
+        }
     }
 }
 
