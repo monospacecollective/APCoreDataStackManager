@@ -917,7 +917,7 @@
         NSManagedObjectContext * managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
         [managedObjectContext performBlockAndWait:^{
             [managedObjectContext setPersistentStoreCoordinator:coordinator];
-            [managedObjectContext setMergePolicy:NSOverwriteMergePolicy];
+            [managedObjectContext setMergePolicy:NSMergeByPropertyObjectTrumpMergePolicy];
         }];
         [self setRootManagedObjectContext:managedObjectContext];
     }
