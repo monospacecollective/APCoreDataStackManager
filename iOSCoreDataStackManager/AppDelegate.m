@@ -16,6 +16,11 @@
     id ap_iCloudDocumentStorageAvailabilityObserver;
     
     void (^ap_persistentStoreCompletionHandler)();
+    
+    // Alert views
+    UIAlertView * ap_ubiquitousStoreUnavailableAlertView;
+    UIAlertView * ap_couldNotOpenUbiquitousStoreAlertView;
+    UIAlertView * ap_noUbiquitousPersistentStoreFoundAlertView;
 }
 
 @property (nonatomic, strong) APCoreDataStackManager * coreDataStackManager;
@@ -105,13 +110,44 @@
                 [tableView reloadData];
             }
         }
-        else if(error) {
-            if([[error domain] isEqualToString:CORE_DATA_STACK_MANAGER_ERROR_DOMAIN]) {
+        else if(error) {NSInteger errorCode = [error code];
+            if(errorCode == APCoreDataStackManagerErrorDocumentStorageAvailabilityTimeOut) {
+                // Attempt to open ubiquitous store failed
+                if(!ap_ubiquitousStoreUnavailableAlertView) {
+                    ap_ubiquitousStoreUnavailableAlertView = [[UIAlertView alloc] initWithTitle:@"iCloud is unavailable"
+                                                                                        message:@"iCloud document storage availability could not be dermined in time."
+                                                                                       delegate:sself
+                                                                              cancelButtonTitle:@"Use local database"
+                                                                              otherButtonTitles:@"Retry", nil];
+                }
+                [ap_ubiquitousStoreUnavailableAlertView show];
+                return;
+            }
+            else if(errorCode == APCoreDataStackManagerErrorDocumentStorageUnavailable) {
+                // Attempt to open ubiquitous store failed
+                if(!ap_couldNotOpenUbiquitousStoreAlertView) {
+                    NSString * deviceName = [[UIDevice currentDevice] model];
+                    ap_couldNotOpenUbiquitousStoreAlertView = [[UIAlertView alloc] initWithTitle:@"You are not using iCloud"
+                                                                                         message:[NSString stringWithFormat:@"Your database has been deleted from this %@ but will stay on iCloud.", deviceName]
+                                                                                        delegate:sself
+                                                                               cancelButtonTitle:nil
+                                                                               otherButtonTitles:@"OK", nil];
+                }
+                [ap_couldNotOpenUbiquitousStoreAlertView show];
+            }
+            else if(errorCode == APCoreDataStackManagerErrorNoUbiquitousPersistentStoreFound) {
+                if(!ap_noUbiquitousPersistentStoreFoundAlertView) {
+                    NSString * deviceName = [[UIDevice currentDevice] model];
+                    ap_noUbiquitousPersistentStoreFoundAlertView = [[UIAlertView alloc] initWithTitle:@"Database unavailable"
+                                                                                              message:[NSString stringWithFormat:@"Your database has been deleted from iCloud. The app will roll back to a previous version stored on your %@.", deviceName]
+                                                                                             delegate:sself
+                                                                                    cancelButtonTitle:nil
+                                                                                    otherButtonTitles:@"OK", nil];
+                }
+                [ap_noUbiquitousPersistentStoreFoundAlertView show];
+            }
+            else {
                 NSLog(@"%@", error);
-                // Handle the error appropriately. Most of the time, errors are issued because the stack cannot be set up with a ubiquitous store
-                // You can fall back to using the local ubiquitous store with resetStackToBeLocalWithCompletionHandler:
-                // or you can retry again if you get a APCoreDataStackManagerErrorDocumentStorageAvailabilityTimeOut error
-                [sself ap_resetStackToBeLocal];
             }
         }
         
