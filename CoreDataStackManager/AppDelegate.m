@@ -204,13 +204,6 @@
 #pragma mark
 #pragma mark APCoreDataStackManagerDelegate
 
-- (void)coreDataStackManager:(APCoreDataStackManager *)manager
-           migrateStoreAtURL:(NSURL *)storeURL
-withDestinationManagedObjectModel:(NSManagedObjectModel *)model
-           completionHandler:(void (^)(BOOL, NSError *))completionHandler {
-    
-}
-
 // Requests the delegate to refresh the stack using the local store
 - (void)coreDataStackManagerRequestLocalStoreRefresh:(APCoreDataStackManager *)manager {
     [manager resetStackToBeLocalWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {

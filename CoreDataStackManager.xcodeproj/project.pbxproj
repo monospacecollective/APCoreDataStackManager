@@ -14,6 +14,7 @@
 		776C9F031514CEDC00CA9292 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 776C9F021514CEDC00CA9292 /* AppDelegate.m */; };
 		776C9F061514CEDC00CA9292 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 776C9F041514CEDC00CA9292 /* MainMenu.xib */; };
 		776C9F091514CEDC00CA9292 /* CoreDataStackManager.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 776C9F071514CEDC00CA9292 /* CoreDataStackManager.xcdatamodeld */; };
+		77944E3E1548064B00CDC5BC /* README.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 77944E3D1548064B00CDC5BC /* README.markdown */; };
 		77C26EB71514D21F007BB1CD /* APCoreDataStackManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 776C9F101514CF7900CA9292 /* APCoreDataStackManager.m */; };
 /* End PBXBuildFile section */
 
@@ -35,6 +36,7 @@
 		776C9F0F1514CF7900CA9292 /* APCoreDataStackManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = APCoreDataStackManager.h; sourceTree = "<group>"; };
 		776C9F101514CF7900CA9292 /* APCoreDataStackManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = APCoreDataStackManager.m; sourceTree = "<group>"; };
 		776F5C991514DAB700E75092 /* CoreDataStackManager.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = CoreDataStackManager.entitlements; sourceTree = "<group>"; };
+		77944E3D1548064B00CDC5BC /* README.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.markdown; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 				776C9EFB1514CEDC00CA9292 /* main.m */,
 				776C9EFD1514CEDC00CA9292 /* CoreDataStackManager-Prefix.pch */,
 				776C9EFE1514CEDC00CA9292 /* Credits.rtf */,
+				77944E3D1548064B00CDC5BC /* README.markdown */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -165,6 +168,7 @@
 				776C9EFA1514CEDC00CA9292 /* InfoPlist.strings in Resources */,
 				776C9F001514CEDC00CA9292 /* Credits.rtf in Resources */,
 				776C9F061514CEDC00CA9292 /* MainMenu.xib in Resources */,
+				77944E3E1548064B00CDC5BC /* README.markdown in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
