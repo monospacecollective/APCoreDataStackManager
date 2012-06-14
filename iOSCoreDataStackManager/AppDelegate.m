@@ -289,6 +289,9 @@
 #pragma mark - Persistent Store Management
 
 - (void)ap_openUbiquitousStore {
+    // Throw away our managed object context as it is about to become invalid
+    [self setManagedObjectContext:nil];
+    
     [self setICloudButtonEnabled:NO];
     APCoreDataStackManager * coreDataStackManager = [self coreDataStackManager];
     [coreDataStackManager resetStackToBeUbiquitousWithCompletionHandler:^(NSManagedObjectContext * context, NSError * error) {
