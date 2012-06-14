@@ -174,7 +174,7 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [[NSNotificationCenter defaultCenter] postNotificationName:APUBIQUITOUSSTORAGEAVAILABILITYDIDCHANGENOTIFICATION
                                                                 object:self
-                                                              userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:available] forKey:@"ubiquitousStorageAvailable"]]; 
+                                                              userInfo:@{@"ubiquitousStorageAvailable": @(available)}]; 
         });
     });
 }
@@ -271,7 +271,7 @@
     NSURL           * ubiquityConfigurationURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:UBIQUITYCONFIGURATIONFILENAME];
     
     // Write it to the configuration file
-    NSDictionary * dictionary = [NSDictionary dictionaryWithObject:contentName forKey:UBIQUITYCONFIGURATIONCONTENTNAMEKEY];
+    NSDictionary * dictionary = @{UBIQUITYCONFIGURATIONCONTENTNAMEKEY: contentName};
     NSData * ubiquityConfigurationData = [NSPropertyListSerialization dataWithPropertyList:dictionary
                                                                                     format:NSPropertyListXMLFormat_v1_0
                                                                                    options:0
@@ -330,8 +330,8 @@
     
     // Set up the ubiquitous options
     NSURL * ubiquitousContentURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:@"UbiquitousContent"];
-    NSDictionary * options = [NSDictionary dictionaryWithObjectsAndKeys:storeUbiquitousContentName, NSPersistentStoreUbiquitousContentNameKey,
-                              ubiquitousContentURL, NSPersistentStoreUbiquitousContentURLKey, nil];
+    NSDictionary * options = @{NSPersistentStoreUbiquitousContentNameKey: storeUbiquitousContentName,
+                              NSPersistentStoreUbiquitousContentURLKey: ubiquitousContentURL};
     NSURL * storeURL = [self ap_ubiquitousStoreURLWithContentName:storeUbiquitousContentName];
 
     [persistentStoreCoordinator lock];
@@ -348,7 +348,7 @@
         
         [[NSNotificationCenter defaultCenter] postNotificationName:APPERSISTENTSTOREDIDCHANGENOTIFICATION
                                                             object:nil
-                                                          userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:@"PersistentStoreIsUbiquitous"]];
+                                                          userInfo:@{@"PersistentStoreIsUbiquitous": @YES}];
         
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerDidAddUbiquitousStore:)]) {
             [delegate coreDataStackManagerDidAddUbiquitousStore:self];
@@ -387,7 +387,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:APPERSISTENTSTOREDIDCHANGENOTIFICATION
                                                             object:nil
-                                                          userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"PersistentStoreIsUbiquitous"]];
+                                                          userInfo:@{@"PersistentStoreIsUbiquitous": @NO}];
         
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerDidAddLocalStore:)]) {
             [delegate coreDataStackManagerDidAddLocalStore:self];
@@ -660,7 +660,7 @@
         // Migrate the store
         NSString        * storeUbiquitousContentName = [self ap_newStoreUbiquitousContentName];
         NSURL           * ubiquitousContentURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:@"UbiquitousContent"];
-        NSDictionary    * options = [NSDictionary dictionaryWithObjectsAndKeys:storeUbiquitousContentName, NSPersistentStoreUbiquitousContentNameKey, ubiquitousContentURL, NSPersistentStoreUbiquitousContentURLKey, nil];
+        NSDictionary    * options = @{NSPersistentStoreUbiquitousContentNameKey: storeUbiquitousContentName, NSPersistentStoreUbiquitousContentURLKey: ubiquitousContentURL};
         NSURL * ubiquitousStoreURL = [self ap_ubiquitousStoreURLWithContentName:storeUbiquitousContentName];
         
         NSPersistentStore * migratedStore = [psc migratePersistentStore:storeToMigrate 
@@ -873,7 +873,7 @@
     NSError * directoryCreationError = nil;
     
     BOOL success = NO;
-    NSDictionary * properties = [applicationDocumentsDirectory resourceValuesForKeys:[NSArray arrayWithObject:NSURLIsDirectoryKey] error:&directoryCreationError];
+    NSDictionary * properties = [applicationDocumentsDirectory resourceValuesForKeys:@[NSURLIsDirectoryKey] error:&directoryCreationError];
     if (!properties) {
         if ([directoryCreationError code] == NSFileReadNoSuchFileError) {
             NSFileManager * fileManager = [NSFileManager defaultManager];
@@ -881,7 +881,7 @@
         }
     }
     else {
-        if ([[properties objectForKey:NSURLIsDirectoryKey] boolValue] != YES) {
+        if ([properties[NSURLIsDirectoryKey] boolValue] != YES) {
             directoryCreationError = [NSError errorWithDomain:CORE_DATA_STACK_MANAGER_ERROR_DOMAIN
                                                          code:APCoreDataStackManagerErrorFileFoundAtApplicationDirectoryURL
                                                      userInfo:nil];
