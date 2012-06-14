@@ -17,8 +17,6 @@
     NSString                      * ap_storeName;
     NSURL                         * ap_modelURL;
     
-    id                            ap_managedObjectContextObjectsDidChangeObserver;
-    
     dispatch_queue_t              ap_persistentStoreQueue;
     dispatch_queue_t              ap_ubiquitousStorageCheckQueue;
     
@@ -994,8 +992,6 @@
 }
 
 - (void)ap_resetCoreDataStack {
-    [[NSNotificationCenter defaultCenter] removeObserver:ap_managedObjectContextObjectsDidChangeObserver];
-     
     // Save the changes
     NSManagedObjectContext * context = ap_rootManagedObjectContext;
     [context processPendingChanges];
