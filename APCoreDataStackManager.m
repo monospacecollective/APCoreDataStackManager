@@ -1004,6 +1004,13 @@
         }];
     }
     
+    NSPersistentStoreCoordinator * psc = [self persistentStoreCoordinator];
+    NSArray * persistentStores = [psc persistentStores];
+    NSError * error = nil;
+    for(NSPersistentStore * store in persistentStores) {
+        [psc removePersistentStore:store error:&error];
+    }
+    
     [self setCurrentPersistentStoreURL:nil];
     [self setManagedObjectModel:nil];
     [self setPersistentStoreCoordinator:nil];
