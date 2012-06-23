@@ -346,7 +346,7 @@
         
         [[NSNotificationCenter defaultCenter] postNotificationName:APPERSISTENTSTOREDIDCHANGENOTIFICATION
                                                             object:nil
-                                                          userInfo:@{@"PersistentStoreIsUbiquitous": @YES}];
+                                                          userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:@"PersistentStoreIsUbiquitous"]];
         
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerDidAddUbiquitousStore:)]) {
             [delegate coreDataStackManagerDidAddUbiquitousStore:self];
@@ -385,7 +385,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:APPERSISTENTSTOREDIDCHANGENOTIFICATION
                                                             object:nil
-                                                          userInfo:@{@"PersistentStoreIsUbiquitous": @NO}];
+                                                          userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"PersistentStoreIsUbiquitous"]];
         
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerDidAddLocalStore:)]) {
             [delegate coreDataStackManagerDidAddLocalStore:self];
@@ -879,7 +879,7 @@
         }
     }
     else {
-        if ([properties[NSURLIsDirectoryKey] boolValue] != YES) {
+        if ([[properties objectForKey:NSURLIsDirectoryKey] boolValue] != YES) {
             directoryCreationError = [NSError errorWithDomain:CORE_DATA_STACK_MANAGER_ERROR_DOMAIN
                                                          code:APCoreDataStackManagerErrorFileFoundAtApplicationDirectoryURL
                                                      userInfo:nil];
