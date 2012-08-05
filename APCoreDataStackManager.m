@@ -684,11 +684,23 @@
                                      nil];
         NSURL * ubiquitousStoreURL = [self ap_ubiquitousStoreURLWithContentName:storeUbiquitousContentName];
         
-        NSPersistentStore * migratedStore = [psc migratePersistentStore:storeToMigrate
-                                                                  toURL:ubiquitousStoreURL
-                                                                options:options
-                                                               withType:NSSQLiteStoreType
-                                                                  error:&pscError];
+        NSPersistentStore *migratedStore = nil;
+        @try {
+            migratedStore = [psc migratePersistentStore:storeToMigrate
+                                                  toURL:ubiquitousStoreURL
+                                                options:options
+                                               withType:NSSQLiteStoreType
+                                                  error:&pscError];
+        }
+        @catch (NSException *exception) {
+            
+            if(completionHandler) {
+                completionHandler(nil, [NSError errorWithDomain:CORE_DATA_STACK_MANAGER_ERROR_DOMAIN
+                                                           code:APCoreDataStackManagerErrorDocumentStorageUnavailable
+                                                       userInfo:[NSDictionary dictionaryWithObject:[exception reason] forKey:NSLocalizedDescriptionKey]]);
+            }
+            return;
+        }
         
         ap_currentStoreUbiquitousContentName = storeUbiquitousContentName;
         ap_ubiquitousPersistentStoreURL = ubiquitousStoreURL;
