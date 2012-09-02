@@ -112,7 +112,6 @@
     if([[NSFileCoordinator filePresenters] containsObject:self]) {
         [NSFileCoordinator removeFilePresenter:self];
     }
-    dispatch_release(ap_persistentStoreQueue);
 }
 
 - (void)ap_checkUbiquitousDocumentStorageAvailabilityWithTimeOutDelay:(NSTimeInterval)delay completionHandler:(void (^)(BOOL, BOOL, NSURL *, NSURL *, NSString *))completionHandler {
