@@ -72,8 +72,8 @@
 // Persistent store data
 - (NSData *)persistentStoreData;
 
-// URLs of remaining persistent stores the local ubiquitous container
-- (NSArray *)remainingPersistentStoresURLs;
+// URLs of previously persistent stores in the local ubiquitous container
+- (NSArray *)previouslyUsedPersistentStoresURLs;
 
 @end
 

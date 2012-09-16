@@ -828,7 +828,7 @@
 
 #pragma mark - Remaining persistent stores
 
-- (NSArray *)remainingPersistentStoresURLs {
+- (NSArray *)previouslyUsedPersistentStoresURLs {
     NSURL * ubiquityContainerURL = ap_ubiquityContainerURL;
     if(!ubiquityContainerURL) {
         // URLs will not be fetched asynchronously
@@ -840,11 +840,17 @@
     persistentStoresContainer = [persistentStoresContainer URLByAppendingPathComponent:@"LocalData.nosync"
                                                                            isDirectory:YES];
     NSFileManager * fileManager = [NSFileManager defaultManager];
-    NSEnumerator * enumerator = [fileManager enumeratorAtURL:persistentStoresContainer
-      includingPropertiesForKeys:@[NSURLNameKey, NSURLContentModificationDateKey]
-                         options:(NSDirectoryEnumerationSkipsHiddenFiles|NSDirectoryEnumerationSkipsSubdirectoryDescendants)
-                    errorHandler:nil];
-    return [enumerator allObjects];
+    NSDirectoryEnumerator * enumerator = [fileManager enumeratorAtURL:persistentStoresContainer
+                                           includingPropertiesForKeys:@[NSURLNameKey, NSURLContentModificationDateKey]
+                                                              options:(NSDirectoryEnumerationSkipsHiddenFiles|NSDirectoryEnumerationSkipsSubdirectoryDescendants)
+                                                         errorHandler:nil];
+    NSMutableArray * urls = [NSMutableArray array];
+    for (NSURL * url in enumerator) {
+        if(![url isEqual:[self ubiquitousPersistentStoreURL]]) {
+            [urls addObject:url];
+        }
+    }
+    return [NSArray arrayWithArray:urls];
 }
 
 #pragma mark
