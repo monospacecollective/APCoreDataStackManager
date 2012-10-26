@@ -568,7 +568,7 @@
         }
         
         // Add the new store
-        NSPersistentStore * newStore = [psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:originStoreURL options:nil error:&pscError];
+        NSPersistentStore * newStore = [psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:originStoreURL options:@{NSReadOnlyPersistentStoreOption : @YES} error:&pscError];
         if(!newStore) {
             if(completionHandler) {
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -639,7 +639,7 @@
         NSPersistentStore * storeToMigrate = [psc addPersistentStoreWithType:NSSQLiteStoreType
                                                                configuration:nil
                                                                          URL:originStoreURL
-                                                                     options:nil
+                                                                     options:@{NSReadOnlyPersistentStoreOption : @YES}
                                                                        error:&pscError];
         if(!storeToMigrate) {
             dispatch_async(dispatch_get_main_queue(), ^{
