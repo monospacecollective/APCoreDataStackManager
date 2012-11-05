@@ -641,6 +641,31 @@
                                                                          URL:originStoreURL
                                                                      options:@{NSReadOnlyPersistentStoreOption : @YES}
                                                                        error:&pscError];
+        
+        // Erase keys about the iCloud metadata of the persistent store
+        // Known bug in iOS 6 and OS 10.8.2 that lead in corruption of this metadata
+        // and prevents the store to be succesfully migrated afterwards
+        BOOL resetiCloudMetadata = NO;
+        if(resetiCloudMetadata) {
+            NSMutableDictionary * metadata = [NSMutableDictionary dictionaryWithDictionary:[psc metadataForPersistentStore:storeToMigrate]];
+            NSSet * ubiquityKeys = [metadata keysOfEntriesPassingTest:^BOOL(id key, id obj, BOOL *stop) {
+                NSRange range = [key rangeOfString:@"com.apple.coredata.ubiquity"];
+                return !(range.location == NSNotFound && range.length == 0);
+            }];
+            [metadata removeObjectsForKeys:[ubiquityKeys allObjects]];
+            [psc removePersistentStore:storeToMigrate error:NULL];
+            NSError * e = nil;
+            [NSPersistentStoreCoordinator setMetadata:[NSDictionary dictionaryWithDictionary:metadata]
+                             forPersistentStoreOfType:NSSQLiteStoreType
+                                                  URL:originStoreURL
+                                                error:&e];
+            storeToMigrate = [psc addPersistentStoreWithType:NSSQLiteStoreType
+                                               configuration:nil
+                                                         URL:originStoreURL
+                                                     options:@{NSReadOnlyPersistentStoreOption : @YES}
+                                                       error:&pscError];
+        }
+        
         if(!storeToMigrate) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 if(completionHandler) {
