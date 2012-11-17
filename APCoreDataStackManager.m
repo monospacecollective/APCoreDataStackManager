@@ -328,14 +328,9 @@
     // Set up the ubiquitous options
     NSURL * ubiquitousContentURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:@"UbiquitousContent"];
     // Automatic migration options
-    NSDictionary * options = [NSDictionary dictionaryWithObjectsAndKeys:
-                              storeUbiquitousContentName, NSPersistentStoreUbiquitousContentNameKey,
-                              ubiquitousContentURL, NSPersistentStoreUbiquitousContentURLKey,
-                              [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
-                              [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption,
-                              nil];
+    NSDictionary * options = @{NSPersistentStoreUbiquitousContentNameKey : storeUbiquitousContentName, NSPersistentStoreUbiquitousContentURLKey : ubiquitousContentURL, NSMigratePersistentStoresAutomaticallyOption : @YES, NSInferMappingModelAutomaticallyOption : @YES};
     NSURL * storeURL = [self ap_ubiquitousStoreURLWithContentName:storeUbiquitousContentName];
-
+    
     [persistentStoreCoordinator lock];
     NSPersistentStore * store = [persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType
                                                                          configuration:nil
@@ -377,10 +372,7 @@
     [self ap_createApplicationDirectoryIfNeededWithError:&pscError];
     
     // Automatic migration options
-    NSDictionary * options = [NSDictionary dictionaryWithObjectsAndKeys:
-                              [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
-                              [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption,
-                              nil];
+    NSDictionary * options = @{NSMigratePersistentStoresAutomaticallyOption : @YES, NSInferMappingModelAutomaticallyOption : @YES };
     NSURL * localStoreURL = [self localStoreURL];
     NSPersistentStoreCoordinator * persistentStoreCoordinator = [self persistentStoreCoordinator];
     NSPersistentStore * store = [persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType
