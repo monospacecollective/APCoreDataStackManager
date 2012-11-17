@@ -171,7 +171,7 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [[NSNotificationCenter defaultCenter] postNotificationName:APUBIQUITOUSSTORAGEAVAILABILITYDIDCHANGENOTIFICATION
                                                                 object:self
-                                                              userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:available] forKey:@"PersistentStoreIsUbiquitous"]];
+                                                              userInfo:@{@"ubiquitousStorageAvailable": @(available)}]; 
         });
     });
 }
@@ -268,7 +268,7 @@
     NSURL           * ubiquityConfigurationURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:UBIQUITYCONFIGURATIONFILENAME];
     
     // Write it to the configuration file
-    NSDictionary * dictionary = [NSDictionary dictionaryWithObject:contentName forKey:UBIQUITYCONFIGURATIONCONTENTNAMEKEY];
+    NSDictionary * dictionary = @{UBIQUITYCONFIGURATIONCONTENTNAMEKEY: contentName};
     NSData * ubiquityConfigurationData = [NSPropertyListSerialization dataWithPropertyList:dictionary
                                                                                     format:NSPropertyListXMLFormat_v1_0
                                                                                    options:0
@@ -350,7 +350,7 @@
         
         [[NSNotificationCenter defaultCenter] postNotificationName:APPERSISTENTSTOREDIDCHANGENOTIFICATION
                                                             object:nil
-                                                          userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:@"PersistentStoreIsUbiquitous"]];
+                                                          userInfo:@{@"PersistentStoreIsUbiquitous": @YES}];
         
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerDidAddUbiquitousStore:)]) {
             [delegate coreDataStackManagerDidAddUbiquitousStore:self];
@@ -394,7 +394,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:APPERSISTENTSTOREDIDCHANGENOTIFICATION
                                                             object:nil
-                                                          userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"PersistentStoreIsUbiquitous"]];
+                                                          userInfo:@{@"PersistentStoreIsUbiquitous": @NO}];
         
         if(delegate && [delegate respondsToSelector:@selector(coreDataStackManagerDidAddLocalStore:)]) {
             [delegate coreDataStackManagerDidAddLocalStore:self];
@@ -578,10 +578,7 @@
         }
         
         // Automatic migration options
-        NSDictionary * options = [NSDictionary dictionaryWithObjectsAndKeys:
-                                  [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
-                                  [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption,
-                                  nil];
+        NSDictionary * options = @{NSReadOnlyPersistentStoreOption : @YES, NSMigratePersistentStoresAutomaticallyOption : @YES, NSInferMappingModelAutomaticallyOption : @YES };
         // Add the new store
         NSPersistentStore * newStore = [psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:originStoreURL options:options error:&pscError];
         if(!newStore) {
@@ -651,16 +648,38 @@
         NSPersistentStoreCoordinator * psc = [self persistentStoreCoordinator];
         
         // Automatic migration options
-        NSDictionary * storeToMigrateOptions = [NSDictionary dictionaryWithObjectsAndKeys:
-                                  [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
-                                  [NSNumber numberWithBool:YES], NSInferMappingModelAutomaticallyOption,
-                                  nil];
+        NSDictionary * storeToMigrateOptions = @{NSReadOnlyPersistentStoreOption : @YES, NSMigratePersistentStoresAutomaticallyOption : @YES, NSInferMappingModelAutomaticallyOption : @YES};
         // Add the store to migrate
         NSPersistentStore * storeToMigrate = [psc addPersistentStoreWithType:NSSQLiteStoreType
                                                                configuration:nil
                                                                          URL:originStoreURL
                                                                      options:storeToMigrateOptions
                                                                        error:&pscError];
+        
+        // Erase keys about the iCloud metadata of the persistent store
+        // Known bug in iOS 6 and OS 10.8.2 that lead in corruption of this metadata
+        // and prevents the store to be succesfully migrated afterwards
+        BOOL resetiCloudMetadata = NO;
+        if(resetiCloudMetadata) {
+            NSMutableDictionary * metadata = [NSMutableDictionary dictionaryWithDictionary:[psc metadataForPersistentStore:storeToMigrate]];
+            NSSet * ubiquityKeys = [metadata keysOfEntriesPassingTest:^BOOL(id key, id obj, BOOL *stop) {
+                NSRange range = [key rangeOfString:@"com.apple.coredata.ubiquity"];
+                return !(range.location == NSNotFound && range.length == 0);
+            }];
+            [metadata removeObjectsForKeys:[ubiquityKeys allObjects]];
+            [psc removePersistentStore:storeToMigrate error:NULL];
+            NSError * e = nil;
+            [NSPersistentStoreCoordinator setMetadata:[NSDictionary dictionaryWithDictionary:metadata]
+                             forPersistentStoreOfType:NSSQLiteStoreType
+                                                  URL:originStoreURL
+                                                error:&e];
+            storeToMigrate = [psc addPersistentStoreWithType:NSSQLiteStoreType
+                                               configuration:nil
+                                                         URL:originStoreURL
+                                                     options:@{NSReadOnlyPersistentStoreOption : @YES}
+                                                       error:&pscError];
+        }
+        
         if(!storeToMigrate) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 if(completionHandler) {
@@ -677,10 +696,7 @@
         // Migrate the store
         NSString        * storeUbiquitousContentName = [self ap_newStoreUbiquitousContentName];
         NSURL           * ubiquitousContentURL = [ap_ubiquityContainerURL URLByAppendingPathComponent:@"UbiquitousContent"];
-        NSDictionary    * options = [NSDictionary dictionaryWithObjectsAndKeys:
-                                     storeUbiquitousContentName, NSPersistentStoreUbiquitousContentNameKey,
-                                     ubiquitousContentURL, NSPersistentStoreUbiquitousContentURLKey,
-                                     nil];
+        NSDictionary    * options = @{NSPersistentStoreUbiquitousContentNameKey: storeUbiquitousContentName, NSPersistentStoreUbiquitousContentURLKey: ubiquitousContentURL};
         NSURL * ubiquitousStoreURL = [self ap_ubiquitousStoreURLWithContentName:storeUbiquitousContentName];
         
         NSPersistentStore *migratedStore = nil;
@@ -863,7 +879,7 @@
 
 #pragma mark - Remaining persistent stores
 
-- (NSArray *)remainingPersistentStoresURLs {
+- (NSArray *)previouslyUsedPersistentStoresURLs {
     NSURL * ubiquityContainerURL = ap_ubiquityContainerURL;
     if(!ubiquityContainerURL) {
         // URLs will not be fetched asynchronously
@@ -875,11 +891,17 @@
     persistentStoresContainer = [persistentStoresContainer URLByAppendingPathComponent:@"LocalData.nosync"
                                                                            isDirectory:YES];
     NSFileManager * fileManager = [NSFileManager defaultManager];
-    NSEnumerator * enumerator = [fileManager enumeratorAtURL:persistentStoresContainer
-      includingPropertiesForKeys:@[NSURLNameKey, NSURLContentModificationDateKey]
-                         options:(NSDirectoryEnumerationSkipsHiddenFiles|NSDirectoryEnumerationSkipsSubdirectoryDescendants)
-                    errorHandler:nil];
-    return [enumerator allObjects];
+    NSDirectoryEnumerator * enumerator = [fileManager enumeratorAtURL:persistentStoresContainer
+                                           includingPropertiesForKeys:@[NSURLNameKey, NSURLContentModificationDateKey]
+                                                              options:(NSDirectoryEnumerationSkipsHiddenFiles|NSDirectoryEnumerationSkipsSubdirectoryDescendants)
+                                                         errorHandler:nil];
+    NSMutableArray * urls = [NSMutableArray array];
+    for (NSURL * url in enumerator) {
+        if(![url isEqual:[self ubiquitousPersistentStoreURL]]) {
+            [urls addObject:url];
+        }
+    }
+    return [NSArray arrayWithArray:urls];
 }
 
 #pragma mark
@@ -926,7 +948,7 @@
     NSError * directoryCreationError = nil;
     
     BOOL success = NO;
-    NSDictionary * properties = [applicationDocumentsDirectory resourceValuesForKeys:[NSArray arrayWithObject:NSURLIsDirectoryKey] error:&directoryCreationError];
+    NSDictionary * properties = [applicationDocumentsDirectory resourceValuesForKeys:@[NSURLIsDirectoryKey] error:&directoryCreationError];
     if (!properties) {
         if ([directoryCreationError code] == NSFileReadNoSuchFileError) {
             NSFileManager * fileManager = [NSFileManager defaultManager];
@@ -934,7 +956,7 @@
         }
     }
     else {
-        if ([[properties objectForKey:NSURLIsDirectoryKey] boolValue] != YES) {
+        if ([properties[NSURLIsDirectoryKey] boolValue] != YES) {
             directoryCreationError = [NSError errorWithDomain:CORE_DATA_STACK_MANAGER_ERROR_DOMAIN
                                                          code:APCoreDataStackManagerErrorFileFoundAtApplicationDirectoryURL
                                                      userInfo:nil];
@@ -1059,12 +1081,19 @@
         }];
     }
     
-    NSPersistentStoreCoordinator * psc = [self persistentStoreCoordinator];
-    NSArray * persistentStores = [psc persistentStores];
-    NSError * error = nil;
-    for(NSPersistentStore * store in persistentStores) {
-        [psc removePersistentStore:store error:&error];
-    }
+    [context performBlockAndWait:^{
+        [context reset];
+        [context lock];
+        
+        NSPersistentStoreCoordinator * psc = [self persistentStoreCoordinator];
+        NSArray * persistentStores = [psc persistentStores];
+        NSError * error = nil;
+        for(NSPersistentStore * store in persistentStores) {
+            [psc removePersistentStore:store error:&error];
+        }
+        
+        [context unlock];
+    }];
     
     [self setCurrentPersistentStoreURL:nil];
     [self setManagedObjectModel:nil];
